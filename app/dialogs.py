@@ -4,6 +4,8 @@ import sys
 import threading
 from pathlib import Path
 
+from .osutil import NO_WINDOW
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 _lock = threading.Lock()
@@ -27,7 +29,7 @@ def open_dialog(kind: str, filter_key: str = "any", initial: str = "", lang: str
         result = subprocess.run(
             [sys.executable, *worker, kind, filter_key, start, lang],
             capture_output=True, text=True, encoding="utf-8", cwd=BASE_DIR,
-            stdin=subprocess.DEVNULL, creationflags=subprocess.CREATE_NO_WINDOW,
+            stdin=subprocess.DEVNULL, creationflags=NO_WINDOW,
         )
         raw = (result.stdout or "").strip()
         if not raw:

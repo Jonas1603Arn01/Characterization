@@ -1,4 +1,9 @@
-# Only for the packaged program (desktop.py -> Characterization.exe);
+# Only for the packaged program (desktop.py -> Characterization);
 # run.py (development) needs just requirements.txt.
 pywebview==5.4
 pyinstaller==6.11.1
+# Linux: the program window uses Qt WebEngine (pip-installable, bundled by
+# PyInstaller); Windows uses WebView2, macOS the system WebKit.
+PyQt6==6.7.1; sys_platform == "linux"
+PyQt6-WebEngine==6.7.0; sys_platform == "linux"
+qtpy==2.4.1; sys_platform == "linux"

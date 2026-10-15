@@ -27,6 +27,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from . import config
+from .osutil import NO_WINDOW
 
 # Breite des Rückfallbilds in Pixel: bei 16 cm Satzbreite rund 250 dpi —
 # dieselbe Größenordnung, die Word selbst beim Einfügen erzeugt.
@@ -36,6 +37,7 @@ _CANDIDATES = [
     Path(r"C:\Program Files\Inkscape\bin\inkscape.exe"),
     Path(r"C:\Program Files\Inkscape\inkscape.exe"),
     Path(r"C:\Program Files (x86)\Inkscape\bin\inkscape.exe"),
+    Path("/Applications/Inkscape.app/Contents/MacOS/inkscape"),
 ]
 
 # Längenangaben in SVG: Zahl mit optionaler Einheit
@@ -109,7 +111,7 @@ def _run_inkscape(inkscape: Path, svg: bytes, name: str,
              f"--export-width={width_px}", str(src)],
             capture_output=True, timeout=180, stdin=subprocess.DEVNULL,
             # ohne Konsolenfenster (das gepackte Programm hat selbst keins)
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=NO_WINDOW,
         )
         if proc.returncode == 0 and out.is_file() and out.stat().st_size:
             return out.read_bytes(), None

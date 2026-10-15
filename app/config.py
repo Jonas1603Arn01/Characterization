@@ -20,8 +20,9 @@ SVG-Spektrum das Rasterbild zu erzeugen, das Word als Rückfall verlangt
 
 Als gepacktes Programm (Characterization.exe, PyInstaller) liegt der
 Programmordner woanders als die Daten: config.json, data\ und backups\
-kommen nach %LOCALAPPDATA%\Characterization — ein Update ersetzt den
-Programmordner komplett, ohne die Daten zu berühren.
+kommen nach %LOCALAPPDATA%\Characterization (macOS: ~/Library/Application
+Support/Characterization, Linux: ~/.local/share/Characterization) — ein
+Update ersetzt den Programmordner komplett, ohne die Daten zu berühren.
 """
 import json
 import os
@@ -34,10 +35,22 @@ FROZEN = getattr(sys, "frozen", False)
 # Alles, was die App schreibt; aus dem Quellordner wie bisher der App-Ordner.
 # CHARACTERIZATION_HOME lenkt das um (Ausprobieren eines Builds mit
 # Wegwerf-Daten, ohne den echten Datensatz anzufassen).
+def _user_data_dir() -> Path:
+    """Üblicher Ort für Programmdaten: Windows %LOCALAPPDATA%, macOS
+    ~/Library/Application Support, Linux $XDG_DATA_HOME bzw. ~/.local/share."""
+    if sys.platform == "win32":
+        base = os.environ.get("LOCALAPPDATA") or Path.home()
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        base = os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share"
+    return Path(base) / "Characterization"
+
+
 if os.environ.get("CHARACTERIZATION_HOME"):
     HOME_DIR = Path(os.environ["CHARACTERIZATION_HOME"]).resolve()
 elif FROZEN:
-    HOME_DIR = Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "Characterization"
+    HOME_DIR = _user_data_dir()
 else:
     HOME_DIR = BASE_DIR
 CONFIG_PATH = HOME_DIR / "config.json"

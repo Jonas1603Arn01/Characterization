@@ -6,13 +6,17 @@ Der Server läuft in einem Hintergrund-Thread. Schließt man das Fenster (oder
 klickt „Quit“), fährt er regulär herunter — wie Strg+C bei run.py: der
 Lifespan sichert die Datenbank und gibt die Sperre im Datenordner frei.
 
+Fenster: Windows WebView2 (edgechromium), macOS WebKit (cocoa), Linux Qt
+WebEngine.
+
 Aus dem Quellordner (zum Ausprobieren, braucht requirements-build.txt):
 
     .venv-build\\Scripts\\python.exe desktop.py
 
-Gepackt wird er mit PyInstaller (Characterization.spec, tools/build_exe.ps1).
+Gepackt wird er mit PyInstaller (Characterization.spec, tools/build.py).
 Dieselbe exe startet mit --dialog den Auswahl-Dialog (app/dialogs.py), weil
-es im gepackten Programm kein „python -m“ gibt.
+es im gepackten Programm kein „python -m“ gibt. --server-only startet nur
+den Server ohne Fenster (Rauchtest der Builds, tools/smoke_test.py).
 """
 import os
 import socket
@@ -27,6 +31,8 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("CHARACTERIZATION_PORT") or 8710)
 URL = f"http://{HOST}:{PORT}"
 TITLE = "Characterization"
+# pywebview-Backend je System (Linux: Qt — per pip mitlieferbar, GTK nicht)
+GUI = {"win32": "edgechromium", "darwin": "cocoa"}.get(sys.platform, "qt")
 
 LOADING_HTML = """<!doctype html><html><body style="margin:0;height:100vh;
 display:flex;align-items:center;justify-content:center;font:15px 'Segoe UI',
@@ -42,13 +48,13 @@ def server_running() -> bool:
 def redirect_output(home) -> None:
     """Ohne Konsole sind stdout/stderr None — uvicorn und jede Fehlermeldung
     liefen dann ins Leere bzw. stürzten ab. Stattdessen: app.log im
-    Datenordner des Programms (bei jedem Start neu)."""
-    if sys.stdout is not None and sys.stderr is not None:
+    Datenordner des Programms (bei jedem Start neu). Gepackt immer — auch
+    unter macOS/Linux, wo die Ausgabe sonst unsichtbar verpufft."""
+    if not getattr(sys, "frozen", False) and sys.stdout and sys.stderr:
         return
     home.mkdir(parents=True, exist_ok=True)
     log = open(home / "app.log", "w", encoding="utf-8", buffering=1)
-    sys.stdout = sys.stdout or log
-    sys.stderr = sys.stderr or log
+    sys.stdout = sys.stderr = log
 
 
 def unblock_net_dlls() -> None:
@@ -58,7 +64,7 @@ def unblock_net_dlls() -> None:
     („Failed to resolve Python.Runtime.Loader.Initialize“). Die Markierung
     der eigenen .NET-DLLs wird deshalb vor dem Laden entfernt, wie
     „Zulassen“ in den Dateieigenschaften."""
-    if not getattr(sys, "frozen", False):
+    if not getattr(sys, "frozen", False) or sys.platform != "win32":
         return
     from pathlib import Path
     base = Path(sys._MEIPASS)
@@ -77,6 +83,18 @@ def version(base) -> str:
         return ""
 
 
+def serve_only() -> None:
+    """Nur der Server, im Vordergrund, bis „Quit“ (POST /api/shutdown)."""
+    import uvicorn
+
+    from app import api
+    from app.main import app
+
+    server = uvicorn.Server(uvicorn.Config(app, host=HOST, port=PORT))
+    api.on_quit = lambda: setattr(server, "should_exit", True)
+    server.run()
+
+
 def main() -> None:
     if len(sys.argv) > 1 and sys.argv[1] == "--dialog":
         from app import dialog_worker
@@ -88,6 +106,10 @@ def main() -> None:
     redirect_output(config.HOME_DIR)
     config.HOME_DIR.mkdir(parents=True, exist_ok=True)
 
+    if len(sys.argv) > 1 and sys.argv[1] == "--server-only":
+        serve_only()
+        return
+
     unblock_net_dlls()
     import webview
     v = version(config.BASE_DIR)
@@ -98,7 +120,7 @@ def main() -> None:
         # dazu — dessen Schließen beendet den laufenden Server nicht.
         webview.create_window(title, URL, width=1400, height=900, min_size=(900, 600))
         try:
-            webview.start(gui="edgechromium", private_mode=False,
+            webview.start(gui=GUI, private_mode=False,
                           storage_path=str(config.HOME_DIR / "webview"))
         except Exception as e:  # kein Fenster möglich: wie run.py im Browser
             print(f"No program window ({e}); opening the browser", file=sys.stderr)
@@ -138,9 +160,9 @@ def main() -> None:
         window.load_url(URL)
 
     try:
-        webview.start(load_when_ready, gui="edgechromium", private_mode=False,
+        webview.start(load_when_ready, gui=GUI, private_mode=False,
                       storage_path=str(config.HOME_DIR / "webview"))
-    except Exception as e:  # kein WebView2 auf diesem PC: wie run.py im Browser
+    except Exception as e:  # kein Fenster möglich (z. B. WebView2 fehlt): Browser
         print(f"No program window ({e}); falling back to the browser", file=sys.stderr)
         api.on_quit = lambda: setattr(server, "should_exit", True)
         while thread.is_alive() and not server.started:

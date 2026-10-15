@@ -34,7 +34,7 @@ import struct
 from io import BytesIO
 from pathlib import Path
 
-from . import chem_text, chemdraw_render, db, docx_write, olecf, paths, svg_raster
+from . import chem_text, db, docx_write, olecf, osutil, paths, svg_raster
 from .docx_write import Document, Run
 from .export import sanitize, unique_path
 from .models import DataEntry, Molecule
@@ -235,7 +235,17 @@ def _add_equation(doc: Document, mol: Molecule, lang: str,
                            "ChemDraw file of the reaction equation not found"))
 
     emf = None
-    if cdx_path and cdx_path.is_file():
+    if cdx_path and cdx_path.is_file() and not osutil.IS_WIN:
+        warnings.append(_T(
+            lang,
+            "Die Reaktionsgleichung als Vektorgrafik braucht ChemDraw unter "
+            "Windows — das gespeicherte Bild wird verwendet",
+            "The reaction equation as vector graphics needs ChemDraw on "
+            "Windows — the stored image is used instead",
+        ))
+    elif cdx_path and cdx_path.is_file():
+        # nur unter Windows: ChemDraw per COM (chemdraw_render)
+        from . import chemdraw_render
         try:
             emf = chemdraw_render.export_emf(cdx_path)
         except chemdraw_render.RenderError as e:

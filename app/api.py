@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from . import chem_text, db, nuclei, paths, relink, richtext
+from . import chem_text, db, nuclei, osutil, paths, relink, richtext
 from .chem import compute_from_smiles
 from .datatypes import DATA_TYPES, DEFAULT_TYPES, NMR_FIELDS
 from .db import get_session
@@ -741,6 +741,11 @@ def _paste_from_clipboard(session: Session, molecule_id: int, kind: str, lang: s
     der Browser nicht durchreicht (z. B. ChemDraws „Copy as PNG"). Liegt
     zusätzlich ChemDraws natives CDX-Format an, wird es als .cdx-Datei
     mitgespeichert (Struktur bleibt in ChemDraw weiterbearbeitbar)."""
+    if not osutil.IS_WIN:
+        # macOS/Linux: nur was der Browser selbst als Bild sieht (app.js lädt
+        # es direkt hoch) — hier kommt also nur an, was kein Bild ist
+        raise HTTPException(422, T(lang, "Zwischenablage enthält kein Bild",
+                                   "Clipboard contains no image"))
     from . import clipboard_win
 
     mol = get_or_404(session, Molecule, molecule_id, lang)
@@ -824,6 +829,10 @@ def _refresh_from_cdx(session: Session, molecule_id: int, kind: str, lang: str) 
     """Rendert das Bild neu aus der mitgespeicherten ChemDraw-Datei — nötig,
     wenn die .cdx über „ChemDraw ⬈" bearbeitet und gespeichert wurde. Die
     .cdx selbst bleibt unverändert; nur das Pixelbild wird ersetzt."""
+    if not osutil.IS_WIN:
+        raise HTTPException(501, T(lang,
+                                   "Bilder aus ChemDraw-Dateien neu erzeugen geht nur unter Windows",
+                                   "Re-rendering images from ChemDraw files needs Windows"))
     from . import chemdraw_render
 
     mol = get_or_404(session, Molecule, molecule_id, lang)
@@ -883,6 +892,10 @@ def copy_chemdraw(
     """Legt die zum Bild-Slot gespeicherte ChemDraw-Zeichnung in die
     Windows-Zwischenablage — wie Kopieren in ChemDraw selbst. Ändert nichts
     am Datensatz (daher weder Undo-Schritt noch im Lesemodus gesperrt)."""
+    if not osutil.IS_WIN:
+        raise HTTPException(501, T(lang,
+                                   "ChemDraw-Zeichnungen kopieren geht nur unter Windows",
+                                   "Copying ChemDraw drawings needs Windows"))
     from . import clipboard_win
 
     if kind not in _CDX_ATTR:
@@ -1422,7 +1435,7 @@ def open_path(
                                    "Only paths linked in the app may be opened"))
     if data.reveal and p.is_file():
         p = p.parent  # verlinkte Ordner bleiben sie selbst, Dateien zeigen ihren Ordner
-    os.startfile(str(p))
+    osutil.open_path(str(p))
     return {"ok": True}
 
 

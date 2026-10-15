@@ -1,0 +1,51 @@
+CHARACTERIZATION - QUICK START GUIDE (macOS)
+============================================
+
+Local app for organizing characterization data
+(projects -> molecules -> analytics). All data stays on this Mac.
+Needs a Mac with Apple silicon (M1 or newer).
+
+
+FIRST-TIME SETUP (once)
+-----------------------
+1. Drag "Characterization.app" into your Applications folder.
+2. The app is not notarized by Apple, so macOS blocks the first start.
+   Open Terminal and run once:
+       xattr -dr com.apple.quarantine /Applications/Characterization.app
+   (Alternatively: try to open the app, then System Settings ->
+   Privacy & Security -> "Open Anyway".)
+3. Start the app from Applications or Launchpad. Right-click its icon
+   in the Dock -> Options -> "Keep in Dock" for a permanent shortcut.
+
+
+DAILY USE
+---------
+- The app opens in its own window. Close the window or click "Quit"
+  (top right): a backup is taken and the data folder is released.
+- Your data lives in ~/Library/Application Support/Characterization
+  (data/, backups/), separate from the app; nothing is sent to the
+  internet.
+
+
+WHAT ONLY WORKS ON WINDOWS
+--------------------------
+ChemDraw is remote-controlled on Windows only. On macOS:
+- Structure images are pasted with Cmd+V or dragged in as image files,
+  but the ChemDraw drawing itself (.cdx) is not captured with them.
+- "Copy" (ChemDraw object to the clipboard) and re-rendering a picture
+  after editing the .cdx are not available.
+- The Word document uses the stored picture of the reaction equation
+  instead of an editable ChemDraw object.
+
+
+INSTALLING A NEW VERSION (without losing data)
+----------------------------------------------
+1. Quit the app.
+2. Download the new ZIP from the Releases page on GitHub.
+3. Replace Characterization.app in Applications with the new one and
+   repeat step 2 of the first-time setup.
+
+
+PROBLEMS?
+---------
+Error details: ~/Library/Application Support/Characterization/app.log

@@ -1,7 +1,7 @@
 # Characterization
 
-A Windows program for organizing characterization data in synthetic organic
-chemistry. You track your compounds as **Projects → Molecules → Data types**
+A desktop program (Windows, macOS, Linux) for organizing characterization
+data in synthetic organic chemistry. You track your compounds as **Projects → Molecules → Data types**
 and see at a glance which analytics are still missing before a compound is
 fully characterized.
 
@@ -114,37 +114,62 @@ machine.
 
 ## Getting started
 
-1. Download `Characterization-<version>-windows.zip` from the
-   [Releases](../../releases) page — **not** "Source code (zip)", which
-   contains no program — and extract it to a permanent location
-   (e.g. Documents — not too deep in sub-folders, Windows limits path
-   lengths).
-2. Double-click **`Create desktop shortcut.bat`** in the extracted folder. It
-   puts a "Characterization" icon on your desktop that starts
-   `Characterization.exe`.
-3. Start the app via the desktop icon. It opens in its own window — no
-   Python, no browser, no server window.
+Download the file for your system from the [Releases](../../releases) page,
+under **Assets** — **not** "Source code (zip)", which contains no program:
 
-To close the app, close the window or click **Quit** (top right): both take
-the exit backup and release the data folder for other PCs.
-`GETTING-STARTED.txt` in the program folder is the short version of this
-README.
+| System | File |
+| --- | --- |
+| Windows 10/11 | `Characterization-<version>-windows.zip` |
+| macOS (Apple silicon, M1 or newer) | `Characterization-<version>-macos-arm64.zip` |
+| Linux (x86-64) | `Characterization-<version>-linux-x86_64.tar.gz` |
 
-The program is not code-signed, so Windows SmartScreen may warn on the first
-start (*More info* → *Run anyway*). The window needs the Microsoft Edge
-WebView2 runtime, which Windows 11 and current Windows 10 already have;
-without it the app opens in your browser instead.
+**Windows:** extract the ZIP to a permanent location (e.g. Documents — not
+too deep in sub-folders, Windows limits path lengths) and double-click
+**`Create desktop shortcut.bat`** in it; the desktop icon then starts
+`Characterization.exe`. The program is not code-signed, so SmartScreen may
+warn on the first start (*More info* → *Run anyway*). The window needs the
+Microsoft Edge WebView2 runtime, which Windows 11 and current Windows 10
+already have; without it the app opens in your browser instead.
+
+**macOS:** drag `Characterization.app` into Applications. The app is not
+notarized by Apple, so macOS blocks the first start; run once in Terminal
+`xattr -dr com.apple.quarantine /Applications/Characterization.app`
+(or open it, then *System Settings → Privacy & Security → Open Anyway*).
+
+**Linux:** extract the archive (`tar -xzf …`) and run
+`./create-desktop-shortcut.sh` in it — it adds "Characterization" to the
+application menu and the desktop. If the window does not open, install
+`libxcb-cursor0 libxkbcommon-x11-0 libegl1 libnss3` (Ubuntu/Debian names).
+
+The app opens in its own window — no Python, no browser, no server window.
+To close it, close the window or click **Quit** (top right): both take the
+exit backup and release the data folder for other PCs. `GETTING-STARTED.txt`
+next to the program is the short version of this README for each system.
+
+**Only on Windows:** ChemDraw is remote-controlled on Windows only. On macOS
+and Linux structure images are pasted (Ctrl/Cmd+V) or dragged in as plain
+images without the ChemDraw drawing (.cdx); "Copy" as ChemDraw object and
+re-rendering after editing the .cdx are not available, and the Word document
+uses the stored picture of the reaction equation instead of an editable
+ChemDraw object.
 
 ## Installing an update (no data loss)
 
-Your data is kept separately from the program, in
-`%LOCALAPPDATA%\Characterization` (`data\`, `backups\`, `config.json`), so an
-update never touches it:
+Your data is kept separately from the program, so an update never touches
+it (`data`, `backups`, `config.json`):
+
+| System | Data folder |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\Characterization` |
+| macOS | `~/Library/Application Support/Characterization` |
+| Linux | `~/.local/share/Characterization` |
 
 1. Close the app.
-2. Download the new ZIP from the [Releases](../../releases) page.
-3. Delete the old program folder and extract the new ZIP in its place. If the
-   folder is now somewhere else, run `Create desktop shortcut.bat` again.
+2. Download the new file from the [Releases](../../releases) page.
+3. Replace the old program with the new one (Windows/Linux: delete the old
+   folder and extract the new archive; macOS: replace the app in
+   Applications and repeat the `xattr` command). If the folder is now
+   somewhere else, run the shortcut script again.
 
 The installed version is shown in the window title and in the app header.
 
@@ -183,8 +208,8 @@ Put the data folder on a network drive and point every PC at it:
    the **same** folder. It already contains a dataset, so it is simply
    opened — the local data on that PC stays untouched.
 
-The choice is remembered per PC in `%LOCALAPPDATA%\Characterization\config.json`
-(never touched by updates). Backups then live in `backups\`
+The choice is remembered per PC in `config.json` in the program's data folder
+(see the table above; never touched by updates). Backups then live in `backups\`
 inside the data folder, so they are the same from every PC.
 
 **One PC edits at a time.** SQLite on a network share cannot safely be
@@ -205,7 +230,8 @@ translated; they are marked with 💻 as "only on this PC".
 
 ## Where your data lives
 
-Everything below is relative to `%LOCALAPPDATA%\Characterization`.
+Everything below is relative to the program's data folder (table under
+"Installing an update").
 
 - SQLite database: `data\app.db`; pasted images and ChemDraw (.cdx) files:
   `data\images\`. Image files that are no longer referenced anywhere (neither
@@ -230,8 +256,12 @@ Everything below is relative to `%LOCALAPPDATA%\Characterization`.
   WebView2 from microsoft.com to get the window back.
 - **The ZIP cannot be extracted / files are missing** — extract it to a
   shorter path (e.g. directly into Documents).
-- **Anything else** — error details are in
-  `%LOCALAPPDATA%\Characterization\app.log` (rewritten on every start).
+- **macOS: "Characterization is damaged and can't be opened"** — run the
+  `xattr` command from "Getting started"; the app is not notarized.
+- **Linux: the window does not open** — install the libraries named under
+  "Getting started".
+- **Anything else** — error details are in `app.log` in the program's data
+  folder (rewritten on every start).
 
 ## For developers
 
@@ -246,7 +276,8 @@ python run.py      # development server, opens the browser at 127.0.0.1:8710
 ```
 
 From the source folder the app keeps `config.json`, `data\` and `backups\`
-in the folder itself; only the packaged program uses `%LOCALAPPDATA%`.
+in the folder itself; only the packaged program uses the per-system data
+folder.
 
 **Run the tests:**
 
@@ -254,21 +285,28 @@ in the folder itself; only the packaged program uses `%LOCALAPPDATA%`.
 .venv\Scripts\python.exe -m pytest tests
 ```
 
-**Build the program** (`Characterization.exe`, own window via pywebview,
-packaged with PyInstaller — recipe in `Characterization.spec`, launcher in
-`desktop.py`):
+**Build the program** for the system you are on (own window via pywebview:
+WebView2 on Windows, WebKit on macOS, Qt WebEngine on Linux; packaged with
+PyInstaller — recipe in `Characterization.spec`, launcher in `desktop.py`):
 
-```powershell
-powershell -ExecutionPolicy Bypass -File tools\build_exe.ps1 -Version 1.0.0 -Test
+```
+python tools/build.py --version 1.0.0 --test
+python tools/smoke_test.py --window
 ```
 
-This creates `dist\Characterization\` (with the files from `release\` next
-to the exe: desktop-shortcut helper and quick start guide) and a ZIP next to
-it, using its own `.venv-build`. To try a build without touching your real dataset, set
-`CHARACTERIZATION_HOME` to a scratch folder before starting the exe.
-Releases are built by GitHub Actions (`.github/workflows/release.yml`) when a
-version tag is pushed (`git tag v1.0.0`, `git push origin v1.0.0`), so a
-download never contains anything from a developer PC.
+`build.py` creates the program in `dist/` (plus the helper files from
+`release/<system>/`) and the download archive next to it, using its own
+`.venv-build`. `smoke_test.py` starts the build with throwaway data and
+checks start-up, the UI in the window, RDKit and a clean quit. To try a
+build by hand without touching your real dataset, set `CHARACTERIZATION_HOME`
+to a scratch folder (and `CHARACTERIZATION_PORT`, e.g. 8790, if the real app
+is running).
+
+Releases are built by GitHub Actions (`.github/workflows/release.yml`) for
+Windows, macOS and Linux when a version tag is pushed (`git tag v1.0.0`,
+`git push origin v1.0.0`); every build is smoke-tested and only then
+released, so a download never contains anything from a developer PC.
+"Run workflow" in the Actions tab builds and tests without releasing.
 
 **Architecture:** FastAPI + SQLite (SQLAlchemy) backend in `app/`, vanilla
 HTML/CSS/JS frontend in `static/`, served at `127.0.0.1:8710`. All UI texts
