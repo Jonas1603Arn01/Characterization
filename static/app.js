@@ -186,6 +186,14 @@ const I18N = {
     datadir_switched: (p, copied) => `✓ Datenordner ist jetzt ${p}${copied ? " (Daten kopiert)" : ""}`,
     ro_text: (who, since) => `Nur lesend: Der Datensatz wird gerade auf „${who}“ bearbeitet${since ? ` (seit ${since})` : ""}. Änderungen sind hier erst möglich, wenn die App dort geschlossen wurde.`,
     ro_takeover: "Trotzdem übernehmen",
+    update_available: (latest, current) => `Neue Version ${latest} verfügbar (installiert: ${current}). Deine Daten bleiben unberührt.`,
+    update_install: "Update installieren und neu starten",
+    update_later: "Später",
+    update_downloading: (pct) => `Update wird geladen … ${pct} %`,
+    update_installing: "Update wird vorbereitet …",
+    update_restarting: "Sicherung erstellt — die App startet gleich in der neuen Version neu.",
+    update_failed: (msg) => `Update fehlgeschlagen: ${msg}. Die bisherige Version läuft weiter.`,
+    update_retry: "Erneut versuchen",
     ro_confirm_takeover: (who) => `Sperre von „${who}“ übernehmen? Nur sinnvoll, wenn die App dort nicht mehr läuft (z. B. nach Absturz) — sonst gehen dortige Änderungen verloren.`,
     short: { procedure: "Vorschrift", nmr_1h: "¹H", nmr_13c: "¹³C", nmr_2d: "2D", ms: "MS", ir: "IR", mp: "Smp." },
   },
@@ -373,6 +381,14 @@ const I18N = {
     datadir_switched: (p, copied) => `✓ Data folder is now ${p}${copied ? " (data copied)" : ""}`,
     ro_text: (who, since) => `Read-only: the dataset is currently being edited on “${who}”${since ? ` (since ${since})` : ""}. Changes are possible here once the app has been closed there.`,
     ro_takeover: "Take over anyway",
+    update_available: (latest, current) => `New version ${latest} available (installed: ${current}). Your data is not touched.`,
+    update_install: "Install update and restart",
+    update_later: "Later",
+    update_downloading: (pct) => `Downloading update … ${pct} %`,
+    update_installing: "Preparing update …",
+    update_restarting: "Backup taken — the app restarts in the new version in a moment.",
+    update_failed: (msg) => `Update failed: ${msg}. The current version keeps running.`,
+    update_retry: "Try again",
     ro_confirm_takeover: (who) => `Take over the lock from “${who}”? Only sensible if the app is no longer running there (e.g. after a crash) — otherwise changes made there will be lost.`,
     short: { procedure: "Proc.", nmr_1h: "¹H", nmr_13c: "¹³C", nmr_2d: "2D", ms: "MS", ir: "IR", mp: "m.p." },
   },
@@ -410,7 +426,7 @@ function trackBusy(delta) {
 }
 
 async function api(path, options = {}) {
-  const quiet = path === "/dialog" || path === "/status";
+  const quiet = path === "/dialog" || path === "/status" || path === "/update";
   if (!quiet) trackBusy(1);
   try {
     return await apiRequest(path, options);
@@ -583,6 +599,7 @@ function applyStaticTexts() {
   $("#datadir-change").textContent = t("datadir_change");
   $("#ro-takeover").textContent = t("ro_takeover");
   if (appStatus) renderStatus(appStatus);
+  renderUpdate();
   $("#dlg-backup [data-close]").textContent = t("close");
 
   for (const slot of IMG_SLOTS) {
@@ -3221,6 +3238,74 @@ async function loadStatus() {
   } catch {}
 }
 
+// ---------- Updates (nur im gepackten Programm) ----------
+// Kurz nach dem Start fragt der Server einmal auf GitHub nach. Ist eine neuere
+// Version da, bietet das Banner sie an; erst der Klick lädt und installiert
+// (app/updater.py). Danach beendet sich die App wie mit „Quit" und startet
+// in der neuen Version neu.
+let updateState = null;
+let updateDismissed = false;
+
+function renderUpdate() {
+  const s = updateState;
+  const show = !!s && !updateDismissed &&
+    ["available", "downloading", "installing", "restarting", "error"].includes(s.status);
+  $("#update-banner").hidden = !show;
+  if (!show) return;
+  const text = {
+    available: () => t("update_available")(s.latest, s.current),
+    downloading: () => t("update_downloading")(Math.round((s.progress || 0) * 100)),
+    installing: () => t("update_installing"),
+    restarting: () => t("update_restarting"),
+    error: () => t("update_failed")(s.error || "?"),
+  }[s.status];
+  $("#update-text").textContent = text();
+  const idle = s.status === "available" || s.status === "error";
+  $("#update-install").hidden = !idle;
+  $("#update-later").hidden = !idle;
+  $("#update-install").textContent = t(s.status === "error" ? "update_retry" : "update_install");
+  $("#update-later").textContent = t("update_later");
+}
+
+async function checkForUpdate() {
+  try {
+    updateState = await api("/update");
+  } catch {
+    return;  // offline o. Ä. — kein Update-Hinweis
+  }
+  renderUpdate();
+}
+
+async function followUpdate() {
+  // Fortschritt abfragen, bis die App sich beendet (dann antwortet der Server
+  // nicht mehr — das neue Fenster öffnet sich von selbst)
+  while (updateState && ["downloading", "installing"].includes(updateState.status)) {
+    await new Promise((r) => setTimeout(r, 500));
+    try {
+      updateState = await api("/update");
+    } catch {
+      break;
+    }
+    renderUpdate();
+  }
+  if (updateState && updateState.status === "restarting") quitting = true;
+}
+
+$("#update-install").addEventListener("click", async () => {
+  try {
+    updateState = await api("/update/install", { method: "POST" });
+  } catch (e) {
+    updateState = { ...updateState, status: "error", error: e.message };
+  }
+  renderUpdate();
+  await followUpdate();
+});
+
+$("#update-later").addEventListener("click", () => {
+  updateDismissed = true;
+  renderUpdate();
+});
+
 $("#ro-takeover").addEventListener("click", async () => {
   const who = (appStatus && appStatus.lock && appStatus.lock.computer) || "?";
   if (!confirm(t("ro_confirm_takeover")(who))) return;
@@ -3820,6 +3905,7 @@ async function showVersion() {
   updateThemeButton();
   showVersion();
   loadStatus();
+  setTimeout(checkForUpdate, 2000);
   datatypes = await api("/datatypes");
   typeFields = Object.fromEntries(datatypes.map((dt) => [dt.code, dt.fields]));
   // Zusätzliche NMR-Kerne: Katalog für die Auswahlliste, Felder wie ¹H/¹³C

@@ -65,7 +65,7 @@ async def lifespan(app: FastAPI):
 # Dateien, Auswahl-Dialoge, Exporte in fremde Ordner, Übernahme der Sperre,
 # Kopieren in die Zwischenablage.
 _READ_ONLY_ALLOWED = ("/api/open", "/api/dialog", "/api/lock/", "/api/settings/",
-                      "/api/shutdown")
+                      "/api/shutdown", "/api/update")
 
 
 def is_blocked_read_only(method: str, path: str) -> bool:

@@ -150,7 +150,7 @@ object, but with a picture preview instead of vector graphics. On macOS the
 app recognizes ChemDraw's drawing by its content and notes in `app.log` under
 which clipboard type ChemDraw delivered it.
 
-## Installing an update (no data loss)
+## Updates (no data loss)
 
 Your data is kept separately from the program, so an update never touches
 it (`data`, `backups`, `config.json`):
@@ -159,6 +159,20 @@ it (`data`, `backups`, `config.json`):
 | --- | --- |
 | Windows | `%LOCALAPPDATA%\Characterization` |
 | macOS | `~/Library/Application Support/Characterization` |
+
+**Automatic (from version 1.4.0 on):** shortly after start the app asks
+GitHub once whether a newer version exists. If so, a bar at the top offers
+it — nothing happens until you click **"Install update and restart"**. The
+app then downloads the file for your system, checks it against the
+release's checksum list, takes a backup and quits like with **Quit**, swaps
+itself for the new version and starts again. If anything goes wrong, the old
+version stays and keeps running. The check only contacts github.com (no
+data of yours is sent); to switch it off, put `"update_check": false` into
+`config.json` in the data folder. Progress and problems are written to
+`update.log` there. On macOS the app has to be in Applications (not started
+from Downloads) to update itself.
+
+**By hand** (or for versions before 1.4.0):
 
 1. Close the app.
 2. Download the new file from the [Releases](../../releases) page.
@@ -227,7 +241,7 @@ translated; they are marked with 💻 as "only on this PC".
 ## Where your data lives
 
 Everything below is relative to the program's data folder (table under
-"Installing an update").
+"Updates").
 
 - SQLite database: `data\app.db`; pasted images and ChemDraw (.cdx) files:
   `data\images\`. Image files that are no longer referenced anywhere (neither
@@ -291,7 +305,9 @@ python tools/smoke_test.py --window
 `build.py` creates the program in `dist/` (plus the helper files from
 `release/<system>/`) and the download archive next to it, using its own
 `.venv-build`. `smoke_test.py` starts the build with throwaway data and
-checks start-up, the UI in the window, RDKit and a clean quit. To try a
+checks start-up, the UI in the window, RDKit and a clean quit;
+`update_test.py` lets a copy posing as version 0.0.1 update itself to the
+newest GitHub release (`app/updater.py`). To try a
 build by hand without touching your real dataset, set `CHARACTERIZATION_HOME`
 to a scratch folder (and `CHARACTERIZATION_PORT`, e.g. 8790, if the real app
 is running).

@@ -12,7 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from . import chem_text, db, nuclei, osutil, paths, relink, richtext
+from . import chem_text, db, nuclei, osutil, paths, relink, richtext, updater
 from .chem import compute_from_smiles
 from .datatypes import DATA_TYPES, DEFAULT_TYPES, NMR_FIELDS
 from .db import get_session
@@ -1518,6 +1518,28 @@ def shutdown(background: BackgroundTasks):
     backup = db.create_backup(only_if_changed=True)
     background.add_task(request_shutdown)
     return {"backup": backup, "read_only": db.is_read_only()}
+
+
+@router.get("/update")
+def update_status():
+    """Update-Stand des gepackten Programms; beim ersten Aufruf je
+    Programmstart wird auf GitHub nachgesehen (app/updater.py)."""
+    return updater.check()
+
+
+@router.post("/update/install")
+def update_install(lang: str = Depends(get_lang)):
+    """Bestätigtes Update: im Hintergrund laden und vorbereiten, dann die App
+    beenden wie mit „Quit“ — das Hilfsskript tauscht aus und startet neu.
+    Fortschritt über GET /update."""
+    def ready() -> None:
+        db.create_backup(only_if_changed=True)
+        request_shutdown()
+
+    try:
+        return updater.start_install(ready)
+    except RuntimeError:
+        raise HTTPException(409, T(lang, "Kein Update verfügbar", "No update available"))
 
 
 @router.get("/status")

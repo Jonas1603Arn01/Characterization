@@ -777,6 +777,17 @@ dialog[open]::backdrop { animation: backdrop-in .16s ease; }
 #ro-banner[hidden] { display: none; }  /* display:flex würde hidden sonst überstimmen */
 #ro-banner button { font-size: 12px; padding: 3px 10px; }
 
+/* ---------- Update-Banner (neue Version auf GitHub) ---------- */
+#update-banner {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 20px; font-size: 13px;
+  background: var(--accent-soft); color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+#update-banner[hidden] { display: none; }
+#update-banner button { font-size: 12px; padding: 3px 10px; }
+#update-banner button[hidden] { display: none; }
+
 /* ---------- Datenordner (Backups-Dialog) ---------- */
 .datadir-current { font-size: 13px; margin: 4px 0 8px; overflow-wrap: anywhere; }
 .datadir-current code { font-size: 12px; }

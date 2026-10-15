@@ -44,6 +44,12 @@ CHEMDRAW
 
 INSTALLING A NEW VERSION (without losing data)
 ----------------------------------------------
+The app looks for new versions on GitHub when it starts and offers
+them in a bar at the top. Click "Install update and restart" - it
+downloads, checks and installs the new version and starts again.
+Your data is not touched. This needs the app in Applications.
+
+By hand:
 1. Quit the app.
 2. Download the new ZIP from the Releases page on GitHub.
 3. Replace Characterization.app in Applications with the new one and
