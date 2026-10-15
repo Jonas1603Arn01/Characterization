@@ -51,6 +51,25 @@ def redirect_output(home) -> None:
     sys.stderr = sys.stderr or log
 
 
+def unblock_net_dlls() -> None:
+    """Entpackt man die ZIP aus einem Browser-Download, trägt jede Datei die
+    Download-Markierung (Zone.Identifier). .NET lädt so markierte
+    Bibliotheken nicht — pythonnet und damit das Fenster scheitern dann
+    („Failed to resolve Python.Runtime.Loader.Initialize“). Die Markierung
+    der eigenen .NET-DLLs wird deshalb vor dem Laden entfernt, wie
+    „Zulassen“ in den Dateieigenschaften."""
+    if not getattr(sys, "frozen", False):
+        return
+    from pathlib import Path
+    base = Path(sys._MEIPASS)
+    for sub in ("pythonnet", "clr_loader", "webview"):
+        for dll in (base / sub).rglob("*.dll"):
+            try:
+                os.remove(f"{dll}:Zone.Identifier")
+            except OSError:
+                pass  # nicht markiert (oder kein Schreibrecht)
+
+
 def version(base) -> str:
     try:
         return (base / "VERSION").read_text(encoding="utf-8").strip()
@@ -69,6 +88,7 @@ def main() -> None:
     redirect_output(config.HOME_DIR)
     config.HOME_DIR.mkdir(parents=True, exist_ok=True)
 
+    unblock_net_dlls()
     import webview
     v = version(config.BASE_DIR)
     title = f"{TITLE} {v}".strip()
@@ -77,8 +97,12 @@ def main() -> None:
         # Läuft schon (zweiter Doppelklick, oder run.py): nur ein Fenster
         # dazu — dessen Schließen beendet den laufenden Server nicht.
         webview.create_window(title, URL, width=1400, height=900, min_size=(900, 600))
-        webview.start(gui="edgechromium", private_mode=False,
-                      storage_path=str(config.HOME_DIR / "webview"))
+        try:
+            webview.start(gui="edgechromium", private_mode=False,
+                          storage_path=str(config.HOME_DIR / "webview"))
+        except Exception as e:  # kein Fenster möglich: wie run.py im Browser
+            print(f"No program window ({e}); opening the browser", file=sys.stderr)
+            webbrowser.open(URL)
         return
 
     import uvicorn
