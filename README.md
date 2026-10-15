@@ -1,6 +1,6 @@
 # Characterization
 
-A local web app for organizing characterization data in synthetic organic
+A Windows program for organizing characterization data in synthetic organic
 chemistry. You track your compounds as **Projects → Molecules → Data types**
 and see at a glance which analytics are still missing before a compound is
 fully characterized.
@@ -112,92 +112,40 @@ machine.
 - **Language & theme** — EN/DE toggle and light/dark theme in the header;
   both are remembered.
 
-## Getting started with the program (download from GitHub)
+## Getting started
 
 1. Download `Characterization-<version>-windows.zip` from the
-   [Releases](../../releases) page and extract it anywhere (e.g. Documents).
-2. Double-click **`Characterization.exe`** inside the extracted folder. The app
-   opens in its own window — no Python, no browser, no black server window.
-   Closing the window (or **Quit**) takes the exit backup and releases the
-   data folder.
-3. Optional: right-click `Characterization.exe` → *Send to* → *Desktop
-   (create shortcut)*.
+   [Releases](../../releases) page and extract it to a permanent location
+   (e.g. Documents — not too deep in sub-folders, Windows limits path
+   lengths).
+2. Double-click **`Create desktop shortcut.bat`** in the extracted folder. It
+   puts a "Characterization" icon on your desktop that starts
+   `Characterization.exe`.
+3. Start the app via the desktop icon. It opens in its own window — no
+   Python, no browser, no server window.
 
-Your data is kept separately from the program, in
-`%LOCALAPPDATA%\Characterization` (`data\`, `backups\`, `config.json`). To
-update, delete the old program folder and extract the new ZIP — your data is
-not touched. The program is not code-signed, so Windows SmartScreen may warn
-on the first start (*More info* → *Run anyway*). The window needs the
-Microsoft Edge WebView2 runtime, which Windows 11 and current Windows 10
-already have; without it the app opens in your browser instead.
+To close the app, close the window or click **Quit** (top right): both take
+the exit backup and release the data folder for other PCs.
+`GETTING-STARTED.txt` in the program folder is the short version of this
+README.
 
-Already using the `start.bat` version? Point the program at your existing
-data via **Backups → Data folder → "Change data folder…"** and pick the
-`data` folder of your old installation.
-
-## Getting started (received the app as a folder or ZIP?)
-
-You only need **Python 3.12** (from [python.org](https://www.python.org/downloads/) —
-tick *"Add python.exe to PATH"* during setup).
-
-1. If you got a ZIP, **extract it first**, then move the folder to a
-   permanent location (e.g. Documents).
-2. Double-click **`start.bat`**. The first launch sets everything up
-   automatically (takes a few minutes), then your browser opens at
-   `http://127.0.0.1:8710`.
-3. Recommended: double-click **`Help and tools\Create desktop shortcut.bat`**
-   to get a "Characterization" icon on your desktop.
-
-The black server window must stay open while you use the app. To close the
-app, click **Quit** (top right): it takes a backup, releases the data folder
-for other PCs, and the black window then closes by itself. Closing the black
-window directly ends the app immediately — without the exit backup, and other
-PCs stay read-only for about five minutes. The **`Help and tools`** folder contains
-everything you need besides `start.bat`: the quick guide
-(`GETTING-STARTED.txt`), the update installer, and the shortcut creator.
+The program is not code-signed, so Windows SmartScreen may warn on the first
+start (*More info* → *Run anyway*). The window needs the Microsoft Edge
+WebView2 runtime, which Windows 11 and current Windows 10 already have;
+without it the app opens in your browser instead.
 
 ## Installing an update (no data loss)
 
-When you receive a new version as a ZIP
-(`Characterization-App_YYYY-MM-DD.zip`):
+Your data is kept separately from the program, in
+`%LOCALAPPDATA%\Characterization` (`data\`, `backups\`, `config.json`), so an
+update never touches it:
 
-1. Put the ZIP in your **Downloads** or **Desktop** folder.
-2. **Close the app** (**Quit** button, top right).
-3. Double-click **`Help and tools\Install update.bat`**.
+1. Close the app.
+2. Download the new ZIP from the [Releases](../../releases) page.
+3. Delete the old program folder and extract the new ZIP in its place. If the
+   folder is now somewhere else, run `Create desktop shortcut.bat` again.
 
-The script finds the newest ZIP automatically, saves an extra safety copy of
-your database to `backups\`, and replaces **only the program files** — your
-projects, images, notes, and backups (`data\`, `backups\`) are never touched.
-Changed Python packages are installed automatically.
-
-The installed version is shown in the app header next to the title (and in
-the `VERSION` file).
-
-> Updating from an old version that still had German file names? The update
-> also recognizes `Charakterisierung-App*.zip` and cleans up the old German
-> helper files (`ANLEITUNG.txt`, `Update einspielen.bat`, …) on the next run.
-
-## Sharing the app with someone else (without your data)
-
-1. Double-click **`Distribute.bat`**.
-2. Choose whether the copy includes the **Distribute feature** itself
-   (`y`: the recipient can pass the app on in the same way; default `n`).
-3. This creates a clean copy `Characterization-App` on your desktop plus a
-   dated ZIP `Characterization-App_YYYY-MM-DD.zip`.
-
-The copy contains only the program — **not** your `data\`, `backups\`,
-`.venv`, or the Git history. A safety check aborts if any database or
-developer files would leak into the copy. The copy is stamped with a version
-(file `VERSION`, shown in the app header).
-
-- **First-time handover:** send the ZIP (or copy the folder to a USB drive).
-  The recipient needs Python 3.12 and starts with `start.bat`.
-- **Updates later:** run `Distribute.bat` again and send only the new ZIP —
-  the recipient double-clicks `Help and tools\Install update.bat` and keeps
-  all their data. The update also follows your choice for the Distribute
-  feature: an update without it removes it from the recipient's copy.
-- **Passed on by a recipient:** such a copy keeps its original version stamp,
-  so your next real release is still recognized as newer.
+The installed version is shown in the window title and in the app header.
 
 ## Transferring your data to another PC
 
@@ -234,8 +182,8 @@ Put the data folder on a network drive and point every PC at it:
    the **same** folder. It already contains a dataset, so it is simply
    opened — the local data on that PC stays untouched.
 
-The choice is remembered per PC in `config.json` next to `start.bat` (never
-touched by updates, never distributed). Backups then live in `backups\`
+The choice is remembered per PC in `%LOCALAPPDATA%\Characterization\config.json`
+(never touched by updates). Backups then live in `backups\`
 inside the data folder, so they are the same from every PC.
 
 **One PC edits at a time.** SQLite on a network share cannot safely be
@@ -256,6 +204,8 @@ translated; they are marked with 💻 as "only on this PC".
 
 ## Where your data lives
 
+Everything below is relative to `%LOCALAPPDATA%\Characterization`.
+
 - SQLite database: `data\app.db`; pasted images and ChemDraw (.cdx) files:
   `data\images\`. Image files that are no longer referenced anywhere (neither
   by the database nor by an undo snapshot) are cleaned up automatically
@@ -268,19 +218,19 @@ translated; they are marked with 💻 as "only on this PC".
   are stored (the export is the only thing that copies files).
 - With a custom data folder (see above) all of this lives in that folder
   instead (`app.db`, `images\`, `undo\`, `backups\`, `in-use.lock`); the
-  folder choice itself is in `config.json` next to `start.bat`.
+  folder choice itself stays in `config.json`.
 
 ## Troubleshooting
 
-- **"No Python found"** — install Python 3.12 and tick *Add python.exe to
-  PATH*, then run `start.bat` again.
-- **App doesn't start after moving to another PC** — just run `start.bat`;
-  the environment is rebuilt automatically.
-- **Browser shows nothing** — open `http://127.0.0.1:8710` manually; make
-  sure the server window is open.
-- **Update failed / app broken after update** — delete the `.venv` folder
-  and run `start.bat`; the environment is rebuilt from scratch. Your data is
-  in `data\` and is not affected.
+- **Windows says the program is unknown** — *More info* → *Run anyway*
+  (the program is not code-signed).
+- **The window stays blank or does not open** — the Microsoft Edge WebView2
+  runtime is missing; the app then opens in your browser instead. Install
+  WebView2 from microsoft.com to get the window back.
+- **The ZIP cannot be extracted / files are missing** — extract it to a
+  shorter path (e.g. directly into Documents).
+- **Anything else** — error details are in
+  `%LOCALAPPDATA%\Characterization\app.log` (rewritten on every start).
 
 ## For developers
 
@@ -288,11 +238,14 @@ translated; they are marked with 💻 as "only on this PC".
 
 ```powershell
 git config --global core.autocrlf true   # once, for correct line endings
-git clone <repo-url>
-cd Charackterisierung
+git clone https://github.com/Jonas1603Arn01/Characterization.git
+cd Characterization
 .\tools\setup.ps1  # or tools\setup.bat; on macOS/Linux: python3 -m venv .venv && pip install -r requirements.txt
-python run.py
+python run.py      # development server, opens the browser at 127.0.0.1:8710
 ```
+
+From the source folder the app keeps `config.json`, `data\` and `backups\`
+in the folder itself; only the packaged program uses `%LOCALAPPDATA%`.
 
 **Run the tests:**
 
@@ -308,8 +261,9 @@ packaged with PyInstaller — recipe in `Characterization.spec`, launcher in
 powershell -ExecutionPolicy Bypass -File tools\build_exe.ps1 -Version 1.0.0 -Test
 ```
 
-This creates `dist\Characterization\` and a ZIP next to it, using its own
-`.venv-build`. To try a build without touching your real dataset, set
+This creates `dist\Characterization\` (with the files from `release\` next
+to the exe: desktop-shortcut helper and quick start guide) and a ZIP next to
+it, using its own `.venv-build`. To try a build without touching your real dataset, set
 `CHARACTERIZATION_HOME` to a scratch folder before starting the exe.
 Releases are built by GitHub Actions (`.github/workflows/release.yml`) when a
 version tag is pushed (`git tag v1.0.0`, `git push origin v1.0.0`), so a

@@ -1,5 +1,6 @@
 ﻿# Builds the packaged program: dist\Characterization\Characterization.exe
-# plus dist\Characterization-<version>-windows.zip for a GitHub release.
+# (plus the files from release\) and dist\Characterization-<version>-windows.zip
+# for a GitHub release.
 #
 #   powershell -ExecutionPolicy Bypass -File tools\build_exe.ps1 [-Version 1.2.0] [-Test]
 #
@@ -39,8 +40,11 @@ New-Item -ItemType Directory -Force build | Out-Null
 & $py -m PyInstaller --noconfirm --clean Characterization.spec
 if ($LASTEXITCODE) { throw "PyInstaller failed" }
 
-# Safety check: no dataset, settings or developer files in the build
 $out = "dist\Characterization"
+# Next to the exe: desktop-shortcut helper and quick start guide
+Copy-Item "release\*" $out
+
+# Safety check: no dataset, settings or developer files in the build
 $leaks = @(Get-ChildItem $out -Recurse -Force | Where-Object {
     $_.Name -in @("app.db", "config.json", "in-use.lock", ".git", ".claude", ".venv") -or
     $_.Extension -in @(".db", ".cdx")

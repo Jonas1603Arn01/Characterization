@@ -12,7 +12,7 @@ from .api import router
 
 STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
 
-# Wird vom Weitergabe-Skript in die verteilte Kopie geschrieben;
+# Schreibt tools/build_exe.ps1 ins gepackte Programm (Versions-Tag);
 # im Entwicklungsordner existiert die Datei nicht (-> leere Version).
 VERSION_FILE = Path(__file__).resolve().parent.parent / "VERSION"
 

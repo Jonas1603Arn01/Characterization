@@ -74,7 +74,7 @@ def main() -> None:
     title = f"{TITLE} {v}".strip()
 
     if server_running():
-        # Läuft schon (zweiter Doppelklick, oder start.bat): nur ein Fenster
+        # Läuft schon (zweiter Doppelklick, oder run.py): nur ein Fenster
         # dazu — dessen Schließen beendet den laufenden Server nicht.
         webview.create_window(title, URL, width=1400, height=900, min_size=(900, 600))
         webview.start(gui="edgechromium", private_mode=False,

@@ -1,4 +1,4 @@
-r"""PC-spezifische Einstellungen der App (config.json neben start.bat).
+r"""PC-spezifische Einstellungen der App (config.json, siehe HOME_DIR).
 
 Die Datei gehört zum jeweiligen Rechner, nicht zum Datensatz — sie wird
 weder verteilt noch beim Update ersetzt. Enthält bisher nur, wo der
