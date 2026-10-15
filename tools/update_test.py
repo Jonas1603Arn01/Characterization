@@ -19,6 +19,8 @@ import time
 import urllib.request
 from pathlib import Path
 
+import ci_report
+
 ROOT = Path(__file__).resolve().parent.parent
 PORT = 8791
 BASE = f"http://127.0.0.1:{PORT}/api"
@@ -110,10 +112,15 @@ def main() -> None:
         print((home / "update.log").read_text(encoding="utf-8"))
         print("UPDATE TEST PASSED")
     except BaseException:
-        for log in (home / "app.log", home / "update.log"):
+        logs = {}
+        for log in (home / "app.log", home / "update.log", home / "update" / "update.sh"):
             if log.exists():
+                logs[log.name] = log.read_text(encoding="utf-8", errors="replace")
                 print(f"----- {log.name} -----")
-                print(log.read_text(encoding="utf-8", errors="replace"))
+                print(logs[log.name])
+        logs["install location"] = "\n".join(
+            str(p.relative_to(tmp)) for p in sorted(tmp.glob("*/*")))
+        ci_report.report("Self-update test failed", logs)
         raise
     finally:
         if proc.poll() is None:

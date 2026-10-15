@@ -19,6 +19,8 @@ import time
 import urllib.request
 from pathlib import Path
 
+import ci_report
+
 ROOT = Path(__file__).resolve().parent.parent
 PORT = 8790
 BASE = f"http://127.0.0.1:{PORT}/api"
@@ -89,9 +91,12 @@ def main() -> None:
         print("quit cleanly, backup:", backups[0].name)
         print("SMOKE TEST PASSED")
     except BaseException:
+        logs = {}
         if log.exists():
+            logs["app.log"] = log.read_text(encoding="utf-8", errors="replace")
             print("----- app.log -----")
-            print(log.read_text(encoding="utf-8", errors="replace"))
+            print(logs["app.log"])
+        ci_report.report("Smoke test failed", logs)
         raise
     finally:
         if proc.poll() is None:

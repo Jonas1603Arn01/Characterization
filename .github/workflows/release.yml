@@ -5,7 +5,8 @@
 #   git tag v1.3.0
 #   git push origin v1.3.0
 #
-# "Run workflow" (Actions tab) builds and tests without releasing.
+# "Run workflow" (Actions tab) or pushing a branch ci/<anything> builds and
+# tests without releasing.
 # The builds only ever see the repository contents — no dataset, config.json
 # or anything else from a developer PC can end up in a download.
 name: Release
@@ -13,6 +14,7 @@ name: Release
 on:
   push:
     tags: ["v*"]
+    branches: ["ci/**"]
   workflow_dispatch:
 
 permissions:

@@ -96,6 +96,7 @@ def main() -> None:
     ap.add_argument("--test", action="store_true", help="run the test suite first")
     args = ap.parse_args()
     version = args.version.lstrip("v") or "dev-" + datetime.date.today().isoformat()
+    version = version.replace("/", "-")  # test runs on branch ci/…
     if not SYSTEM:
         sys.exit("The program is built for Windows and macOS only")
 
