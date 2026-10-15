@@ -6,7 +6,10 @@ REM Run it again after moving the folder somewhere else.
 set "APP_EXE=%~dp0Characterization.exe"
 if not exist "%APP_EXE%" (
     echo Characterization.exe was not found next to this file.
-    echo Keep this file in the extracted program folder.
+    echo.
+    echo You probably downloaded the source code. On the GitHub Releases page,
+    echo download Characterization-VERSION-windows.zip instead ^(not
+    echo "Source code"^), extract it and run this file from that folder.
     echo.
     pause
     exit /b 1

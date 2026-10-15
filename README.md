@@ -115,7 +115,8 @@ machine.
 ## Getting started
 
 1. Download `Characterization-<version>-windows.zip` from the
-   [Releases](../../releases) page and extract it to a permanent location
+   [Releases](../../releases) page — **not** "Source code (zip)", which
+   contains no program — and extract it to a permanent location
    (e.g. Documents — not too deep in sub-folders, Windows limits path
    lengths).
 2. Double-click **`Create desktop shortcut.bat`** in the extracted folder. It
