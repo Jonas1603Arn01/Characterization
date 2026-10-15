@@ -6,8 +6,7 @@ Der Server läuft in einem Hintergrund-Thread. Schließt man das Fenster (oder
 klickt „Quit“), fährt er regulär herunter — wie Strg+C bei run.py: der
 Lifespan sichert die Datenbank und gibt die Sperre im Datenordner frei.
 
-Fenster: Windows WebView2 (edgechromium), macOS WebKit (cocoa), Linux Qt
-WebEngine.
+Fenster: Windows WebView2 (edgechromium), macOS WebKit (cocoa).
 
 Aus dem Quellordner (zum Ausprobieren, braucht requirements-build.txt):
 
@@ -31,8 +30,8 @@ HOST = "127.0.0.1"
 PORT = int(os.environ.get("CHARACTERIZATION_PORT") or 8710)
 URL = f"http://{HOST}:{PORT}"
 TITLE = "Characterization"
-# pywebview-Backend je System (Linux: Qt — per pip mitlieferbar, GTK nicht)
-GUI = {"win32": "edgechromium", "darwin": "cocoa"}.get(sys.platform, "qt")
+# pywebview-Backend je System
+GUI = "cocoa" if sys.platform == "darwin" else "edgechromium"
 
 LOADING_HTML = """<!doctype html><html><body style="margin:0;height:100vh;
 display:flex;align-items:center;justify-content:center;font:15px 'Segoe UI',
@@ -49,7 +48,7 @@ def redirect_output(home) -> None:
     """Ohne Konsole sind stdout/stderr None — uvicorn und jede Fehlermeldung
     liefen dann ins Leere bzw. stürzten ab. Stattdessen: app.log im
     Datenordner des Programms (bei jedem Start neu). Gepackt immer — auch
-    unter macOS/Linux, wo die Ausgabe sonst unsichtbar verpufft."""
+    unter macOS, wo die Ausgabe sonst unsichtbar verpufft."""
     if not getattr(sys, "frozen", False) and sys.stdout and sys.stderr:
         return
     home.mkdir(parents=True, exist_ok=True)

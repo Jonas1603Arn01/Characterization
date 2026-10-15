@@ -5,7 +5,6 @@
 Result in dist/:
     Windows  Characterization/ (Characterization.exe) + Characterization-<v>-windows.zip
     macOS    Characterization.app + Characterization-<v>-macos-arm64.zip
-    Linux    Characterization/ (Characterization)    + Characterization-<v>-linux-x86_64.tar.gz
 
 Uses its own environment (.venv-build) so the everyday .venv stays as it is.
 The build contains only program files: static/, app/ and the Python
@@ -20,7 +19,6 @@ import platform
 import shutil
 import subprocess
 import sys
-import tarfile
 import venv
 from pathlib import Path
 
@@ -28,7 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 VENV = ROOT / ".venv-build"
 DIST = ROOT / "dist"
 
-SYSTEM = {"win32": "windows", "darwin": "macos"}.get(sys.platform, "linux")
+SYSTEM = {"win32": "windows", "darwin": "macos"}.get(sys.platform, "")
 MACHINE = {"amd64": "x86_64", "x86_64": "x86_64", "arm64": "arm64",
            "aarch64": "arm64"}.get(platform.machine().lower(), platform.machine().lower())
 
@@ -85,18 +83,10 @@ def package(version: str) -> Path:
     folder = DIST / "Characterization"
     for f in helpers.iterdir():
         shutil.copy2(f, folder)
-        if f.suffix == ".sh":
-            (folder / f.name).chmod(0o755)
     check_no_leaks(folder)
-    if SYSTEM == "windows":
-        archive = DIST / f"{stem}.zip"
-        archive.unlink(missing_ok=True)
-        shutil.make_archive(str(DIST / stem), "zip", DIST, "Characterization")
-    else:
-        archive = DIST / f"{stem}.tar.gz"
-        archive.unlink(missing_ok=True)
-        with tarfile.open(archive, "w:gz") as tar:  # keeps the executable bits
-            tar.add(folder, arcname="Characterization")
+    archive = DIST / f"{stem}.zip"
+    archive.unlink(missing_ok=True)
+    shutil.make_archive(str(DIST / stem), "zip", DIST, "Characterization")
     return archive
 
 
@@ -106,6 +96,8 @@ def main() -> None:
     ap.add_argument("--test", action="store_true", help="run the test suite first")
     args = ap.parse_args()
     version = args.version.lstrip("v") or "dev-" + datetime.date.today().isoformat()
+    if not SYSTEM:
+        sys.exit("The program is built for Windows and macOS only")
 
     py = venv_python()
     if not py.exists():

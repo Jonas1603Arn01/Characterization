@@ -27,15 +27,19 @@ DAILY USE
   internet.
 
 
-WHAT ONLY WORKS ON WINDOWS
---------------------------
-ChemDraw is remote-controlled on Windows only. On macOS:
-- Structure images are pasted with Cmd+V or dragged in as image files,
-  but the ChemDraw drawing itself (.cdx) is not captured with them.
-- "Copy" (ChemDraw object to the clipboard) and re-rendering a picture
-  after editing the .cdx are not available.
-- The Word document uses the stored picture of the reaction equation
-  instead of an editable ChemDraw object.
+CHEMDRAW
+--------
+- Copy a structure in ChemDraw and paste it into an image slot with
+  Cmd+V: the picture AND the ChemDraw drawing (.cdx) are stored.
+- "ChemDraw" next to the picture opens the drawing in ChemDraw; "Copy"
+  puts it back on the clipboard to paste into ChemDraw.
+- After editing the drawing in ChemDraw, the picture is not updated
+  automatically (that needs Windows): copy the drawing in ChemDraw and
+  paste it again.
+- In the Word document the reaction equation is an editable ChemDraw
+  object with a picture preview (on Windows: vector graphics).
+- If pasting from ChemDraw stores only the picture, please send the
+  lines starting with "clipboard types" from app.log (see PROBLEMS).
 
 
 INSTALLING A NEW VERSION (without losing data)

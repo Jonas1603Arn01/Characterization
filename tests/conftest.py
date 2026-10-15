@@ -1,10 +1,20 @@
 """Gemeinsame Test-Absicherung: Tests dürfen nie die echte
 Windows-Zwischenablage lesen oder beschreiben oder das echte ChemDraw fernsteuern —
 Standard: leer bzw. Fehler. Einzelne Tests überschreiben das per
-monkeypatch mit eigenen Daten."""
+monkeypatch mit eigenen Daten.
+
+Die Windows-Module (clipboard_win, chemdraw_render) lassen sich nur unter
+Windows importieren; unter macOS laufen nur die Mac-Tests
+(test_clipboard_mac.py), die die echte Mac-Zwischenablage benutzen."""
+import sys
+
 import pytest
 
-from app import chemdraw_render, clipboard_win, main, svg_raster
+from app import main, svg_raster
+
+IS_WIN = sys.platform == "win32"
+if IS_WIN:
+    from app import chemdraw_render, clipboard_win
 
 # Der FastAPI-TestClient spricht die App als Host "testserver" an — der
 # lokale Host-Schutz (main.local_only_guard) muss das für Tests zulassen.
@@ -13,6 +23,8 @@ main.ALLOWED_HOSTS.add("testserver")
 
 @pytest.fixture(autouse=True)
 def empty_clipboard(monkeypatch):
+    if not IS_WIN:
+        return
     monkeypatch.setattr(clipboard_win, "read_clipboard_image", lambda: None)
     monkeypatch.setattr(clipboard_win, "read_clipboard_cdx", lambda: None)
     monkeypatch.setattr(clipboard_win, "read_clipboard_smiles", lambda: None)
@@ -21,6 +33,9 @@ def empty_clipboard(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def no_chemdraw(monkeypatch):
+    if not IS_WIN:
+        return
+
     def fail(path):
         raise chemdraw_render.RenderError("ChemDraw ist in Tests deaktiviert")
 

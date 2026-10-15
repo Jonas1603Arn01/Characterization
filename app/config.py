@@ -21,7 +21,7 @@ SVG-Spektrum das Rasterbild zu erzeugen, das Word als Rückfall verlangt
 Als gepacktes Programm (Characterization.exe, PyInstaller) liegt der
 Programmordner woanders als die Daten: config.json, data\ und backups\
 kommen nach %LOCALAPPDATA%\Characterization (macOS: ~/Library/Application
-Support/Characterization, Linux: ~/.local/share/Characterization) — ein
+Support/Characterization) — ein
 Update ersetzt den Programmordner komplett, ohne die Daten zu berühren.
 """
 import json

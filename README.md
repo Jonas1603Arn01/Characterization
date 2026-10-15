@@ -1,7 +1,7 @@
 # Characterization
 
-A desktop program (Windows, macOS, Linux) for organizing characterization
-data in synthetic organic chemistry. You track your compounds as **Projects → Molecules → Data types**
+A desktop program (Windows and macOS) for organizing characterization data
+in synthetic organic chemistry. You track your compounds as **Projects → Molecules → Data types**
 and see at a glance which analytics are still missing before a compound is
 fully characterized.
 
@@ -121,7 +121,6 @@ under **Assets** — **not** "Source code (zip)", which contains no program:
 | --- | --- |
 | Windows 10/11 | `Characterization-<version>-windows.zip` |
 | macOS (Apple silicon, M1 or newer) | `Characterization-<version>-macos-arm64.zip` |
-| Linux (x86-64) | `Characterization-<version>-linux-x86_64.tar.gz` |
 
 **Windows:** extract the ZIP to a permanent location (e.g. Documents — not
 too deep in sub-folders, Windows limits path lengths) and double-click
@@ -136,22 +135,20 @@ notarized by Apple, so macOS blocks the first start; run once in Terminal
 `xattr -dr com.apple.quarantine /Applications/Characterization.app`
 (or open it, then *System Settings → Privacy & Security → Open Anyway*).
 
-**Linux:** extract the archive (`tar -xzf …`) and run
-`./create-desktop-shortcut.sh` in it — it adds "Characterization" to the
-application menu and the desktop. If the window does not open, install
-`libxcb-cursor0 libxkbcommon-x11-0 libegl1 libnss3` (Ubuntu/Debian names).
-
 The app opens in its own window — no Python, no browser, no server window.
 To close it, close the window or click **Quit** (top right): both take the
 exit backup and release the data folder for other PCs. `GETTING-STARTED.txt`
 next to the program is the short version of this README for each system.
 
-**Only on Windows:** ChemDraw is remote-controlled on Windows only. On macOS
-and Linux structure images are pasted (Ctrl/Cmd+V) or dragged in as plain
-images without the ChemDraw drawing (.cdx); "Copy" as ChemDraw object and
-re-rendering after editing the .cdx are not available, and the Word document
-uses the stored picture of the reaction equation instead of an editable
-ChemDraw object.
+**ChemDraw on macOS:** pasting from ChemDraw (Cmd+V) keeps the ChemDraw
+drawing (.cdx) as on Windows, "ChemDraw ⬈" opens it in ChemDraw, and "Copy"
+puts it back on the clipboard. Two things need Windows, where the app can
+remote-control ChemDraw: after you edit a .cdx, the picture is not
+re-rendered automatically — copy the drawing in ChemDraw and paste it again —
+and the reaction equation in the Word document is still an editable ChemDraw
+object, but with a picture preview instead of vector graphics. On macOS the
+app recognizes ChemDraw's drawing by its content and notes in `app.log` under
+which clipboard type ChemDraw delivered it.
 
 ## Installing an update (no data loss)
 
@@ -162,14 +159,13 @@ it (`data`, `backups`, `config.json`):
 | --- | --- |
 | Windows | `%LOCALAPPDATA%\Characterization` |
 | macOS | `~/Library/Application Support/Characterization` |
-| Linux | `~/.local/share/Characterization` |
 
 1. Close the app.
 2. Download the new file from the [Releases](../../releases) page.
-3. Replace the old program with the new one (Windows/Linux: delete the old
-   folder and extract the new archive; macOS: replace the app in
-   Applications and repeat the `xattr` command). If the folder is now
-   somewhere else, run the shortcut script again.
+3. Replace the old program with the new one (Windows: delete the old folder
+   and extract the new ZIP — if it is now somewhere else, run
+   `Create desktop shortcut.bat` again; macOS: replace the app in
+   Applications and repeat the `xattr` command).
 
 The installed version is shown in the window title and in the app header.
 
@@ -258,8 +254,6 @@ Everything below is relative to the program's data folder (table under
   shorter path (e.g. directly into Documents).
 - **macOS: "Characterization is damaged and can't be opened"** — run the
   `xattr` command from "Getting started"; the app is not notarized.
-- **Linux: the window does not open** — install the libraries named under
-  "Getting started".
 - **Anything else** — error details are in `app.log` in the program's data
   folder (rewritten on every start).
 
@@ -271,7 +265,7 @@ Everything below is relative to the program's data folder (table under
 git config --global core.autocrlf true   # once, for correct line endings
 git clone https://github.com/Jonas1603Arn01/Characterization.git
 cd Characterization
-.\tools\setup.ps1  # or tools\setup.bat; on macOS/Linux: python3 -m venv .venv && pip install -r requirements.txt
+.\tools\setup.ps1  # or tools\setup.bat; on macOS: python3 -m venv .venv && pip install -r requirements.txt
 python run.py      # development server, opens the browser at 127.0.0.1:8710
 ```
 
@@ -286,7 +280,7 @@ folder.
 ```
 
 **Build the program** for the system you are on (own window via pywebview:
-WebView2 on Windows, WebKit on macOS, Qt WebEngine on Linux; packaged with
+WebView2 on Windows, WebKit on macOS; packaged with
 PyInstaller — recipe in `Characterization.spec`, launcher in `desktop.py`):
 
 ```
@@ -303,7 +297,7 @@ to a scratch folder (and `CHARACTERIZATION_PORT`, e.g. 8790, if the real app
 is running).
 
 Releases are built by GitHub Actions (`.github/workflows/release.yml`) for
-Windows, macOS and Linux when a version tag is pushed (`git tag v1.0.0`,
+Windows and macOS when a version tag is pushed (`git tag v1.0.0`,
 `git push origin v1.0.0`); every build is smoke-tested and only then
 released, so a download never contains anything from a developer PC.
 "Run workflow" in the Actions tab builds and tests without releasing.

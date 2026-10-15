@@ -6,7 +6,7 @@ Starts the packaged program with throwaway data on a test port and checks
 what only the frozen build can get wrong: it starts at all, serves the UI,
 RDKit computes a formula, and "Quit" ends it cleanly (backup written, data
 folder released). With --window the real program window is opened too and
-must load the UI (on Linux run it under xvfb-run). Never touches a real
+must load the UI. Never touches a real
 dataset: CHARACTERIZATION_HOME points into a temporary folder.
 """
 import argparse

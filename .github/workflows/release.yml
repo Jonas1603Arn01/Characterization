@@ -1,9 +1,9 @@
-# Builds the program for Windows, macOS and Linux on GitHub's own machines,
-# smoke-tests every build and attaches all of them to one release.
+# Builds the program for Windows and macOS on GitHub's own machines,
+# smoke-tests every build and attaches both to one release.
 # Triggered by pushing a version tag:
 #
-#   git tag v1.2.0
-#   git push origin v1.2.0
+#   git tag v1.3.0
+#   git push origin v1.3.0
 #
 # "Run workflow" (Actions tab) builds and tests without releasing.
 # The builds only ever see the repository contents — no dataset, config.json
@@ -28,8 +28,6 @@ jobs:
             test: --test        # unit tests use Windows paths and APIs
           - os: macos-14        # Apple silicon
             test: ""
-          - os: ubuntu-22.04    # older glibc: runs on more distributions
-            test: ""
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -38,16 +36,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: System libraries for the Qt window (Linux)
-        if: runner.os == 'Linux'
-        run: >
-          sudo apt-get update && sudo apt-get install -y xvfb
-          libxcb-cursor0 libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0
-          libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0
-          libxcb-xinerama0 libxcb-xkb1 libegl1 libnss3 libasound2
-
       - name: Build
         run: python tools/build.py --version "${{ github.ref_name }}" ${{ matrix.test }}
+
+      - name: Clipboard and ChemDraw tests (macOS)
+        if: runner.os == 'macOS'
+        run: .venv-build/bin/python -m pytest tests/test_clipboard_mac.py -v
 
       - name: Smoke test (server)
         run: python tools/smoke_test.py
@@ -60,21 +54,12 @@ jobs:
           ForEach-Object { Set-Content -Path $_.FullName -Stream Zone.Identifier -Value "[ZoneTransfer]`r`nZoneId=3" }
 
       - name: Smoke test (program window)
-        if: runner.os != 'Linux'
         run: python tools/smoke_test.py --window
-
-      - name: Smoke test (program window, Linux)
-        if: runner.os == 'Linux'
-        env:
-          QTWEBENGINE_DISABLE_SANDBOX: "1"
-        run: xvfb-run -a python tools/smoke_test.py --window
 
       - uses: actions/upload-artifact@v4
         with:
           name: program-${{ runner.os }}
-          path: |
-            dist/Characterization-*.zip
-            dist/Characterization-*.tar.gz
+          path: dist/Characterization-*.zip
           if-no-files-found: error
 
   release:
@@ -95,3 +80,16 @@ jobs:
           --repo "${{ github.repository }}"
           --title "Characterization ${{ github.ref_name }}"
           --generate-notes
+
+      # Linux is no longer supported (v1.2.0 shipped a Linux build once)
+      - name: Remove Linux downloads from earlier releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          for tag in $(gh release list --repo "$REPO" --limit 100 --json tagName --jq '.[].tagName'); do
+            for asset in $(gh release view "$tag" --repo "$REPO" --json assets --jq '.assets[].name' | grep -i linux || true); do
+              echo "deleting $asset from $tag"
+              gh release delete-asset "$tag" "$asset" --repo "$REPO" --yes
+            done
+          done

@@ -736,28 +736,37 @@ async def _upload_image(
     return _save_image_data(session, mol, kind, await request.body(), lang)
 
 
+def _clipboard_module(lang: str):
+    """Zwischenablage des Systems: clipboard_win bzw. clipboard_mac (gleiche
+    Lese-Funktionen). Andere Systeme: nur, was der Browser selbst als Bild
+    sieht (app.js lädt es direkt hoch)."""
+    if osutil.IS_WIN:
+        from . import clipboard_win
+        return clipboard_win
+    if osutil.IS_MAC:
+        from . import clipboard_mac
+        return clipboard_mac
+    raise HTTPException(422, T(lang, "Zwischenablage enthält kein Bild",
+                               "Clipboard contains no image"))
+
+
 def _paste_from_clipboard(session: Session, molecule_id: int, kind: str, lang: str) -> dict:
-    """Liest die Windows-Zwischenablage serverseitig — sieht auch Formate, die
+    """Liest die Zwischenablage (Windows/macOS) serverseitig — sieht auch Formate, die
     der Browser nicht durchreicht (z. B. ChemDraws „Copy as PNG"). Liegt
     zusätzlich ChemDraws natives CDX-Format an, wird es als .cdx-Datei
     mitgespeichert (Struktur bleibt in ChemDraw weiterbearbeitbar)."""
-    if not osutil.IS_WIN:
-        # macOS/Linux: nur was der Browser selbst als Bild sieht (app.js lädt
-        # es direkt hoch) — hier kommt also nur an, was kein Bild ist
-        raise HTTPException(422, T(lang, "Zwischenablage enthält kein Bild",
-                                   "Clipboard contains no image"))
-    from . import clipboard_win
+    clip = _clipboard_module(lang)
 
     mol = get_or_404(session, Molecule, molecule_id, lang)
     try:
-        data = clipboard_win.read_clipboard_image()
+        data = clip.read_clipboard_image()
     except OSError:
         data = None
     if data is None:
         raise HTTPException(422, T(lang, "Zwischenablage enthält kein Bild",
                                    "Clipboard contains no image"))
     try:
-        cdx = clipboard_win.read_clipboard_cdx()
+        cdx = clip.read_clipboard_cdx()
     except OSError:
         cdx = None
     # ChemDraw legt auch das SMILES mit ab: ein leeres SMILES-Feld wird beim
@@ -765,7 +774,7 @@ def _paste_from_clipboard(session: Session, molecule_id: int, kind: str, lang: s
     # Moleküle — dessen SMILES wäre falsch). Ein vorhandenes SMILES bleibt.
     if kind == "image" and not mol.smiles:
         try:
-            smiles = clipboard_win.read_clipboard_smiles()
+            smiles = clip.read_clipboard_smiles()
         except OSError:
             smiles = None
         if smiles:
@@ -830,9 +839,12 @@ def _refresh_from_cdx(session: Session, molecule_id: int, kind: str, lang: str) 
     wenn die .cdx über „ChemDraw ⬈" bearbeitet und gespeichert wurde. Die
     .cdx selbst bleibt unverändert; nur das Pixelbild wird ersetzt."""
     if not osutil.IS_WIN:
+        # ChemDraw lässt sich nur unter Windows fernsteuern (COM)
         raise HTTPException(501, T(lang,
-                                   "Bilder aus ChemDraw-Dateien neu erzeugen geht nur unter Windows",
-                                   "Re-rendering images from ChemDraw files needs Windows"))
+                                   "Zeichnung in ChemDraw kopieren und hier einfügen, "
+                                   "um das Bild zu aktualisieren",
+                                   "Copy the drawing in ChemDraw and paste it here "
+                                   "to update the picture"))
     from . import chemdraw_render
 
     mol = get_or_404(session, Molecule, molecule_id, lang)
@@ -892,11 +904,10 @@ def copy_chemdraw(
     """Legt die zum Bild-Slot gespeicherte ChemDraw-Zeichnung in die
     Windows-Zwischenablage — wie Kopieren in ChemDraw selbst. Ändert nichts
     am Datensatz (daher weder Undo-Schritt noch im Lesemodus gesperrt)."""
-    if not osutil.IS_WIN:
+    if not (osutil.IS_WIN or osutil.IS_MAC):
         raise HTTPException(501, T(lang,
-                                   "ChemDraw-Zeichnungen kopieren geht nur unter Windows",
-                                   "Copying ChemDraw drawings needs Windows"))
-    from . import clipboard_win
+                                   "ChemDraw-Zeichnungen kopieren geht nur unter Windows und macOS",
+                                   "Copying ChemDraw drawings needs Windows or macOS"))
 
     if kind not in _CDX_ATTR:
         raise HTTPException(404, T(lang, "Unbekannter Bild-Slot", "Unknown image slot"))
@@ -919,7 +930,12 @@ def copy_chemdraw(
         except OSError:
             pass
     try:
-        clipboard_win.write_clipboard(clipboard_win.chemdraw_formats(cdx, image))
+        if osutil.IS_WIN:
+            from . import clipboard_win
+            clipboard_win.write_clipboard(clipboard_win.chemdraw_formats(cdx, image))
+        else:
+            from . import clipboard_mac
+            clipboard_mac.write_chemdraw(cdx, image)
     except OSError as e:
         raise HTTPException(503, T(lang, f"Zwischenablage nicht beschreibbar: {e}",
                                    f"Could not write to the clipboard: {e}"))

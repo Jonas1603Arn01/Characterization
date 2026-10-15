@@ -8,3 +8,4 @@ httpx==0.26.0
 comtypes==1.4.16; sys_platform == "win32"
 pyzipper==0.3.6
 Pillow==12.3.0
+pyobjc-framework-Cocoa; sys_platform == "darwin"

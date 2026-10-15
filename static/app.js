@@ -2716,6 +2716,24 @@ async function pasteFromServerClipboard(slot) {
 document.addEventListener("paste", (ev) => {
   if (detailMolId === null) return;  // nur bei geöffnetem Molekül-Detail
   const file = transferImageFile(ev.clipboardData);
+  // macOS: WebKit reicht ChemDraws Zeichnung als fertiges Bild durch, die
+  // CDX aber nicht — deshalb zuerst der Server (liest beides), das Bild des
+  // Browsers nur als Rückfall
+  if (serverPlatform === "darwin" && !isTextField(document.activeElement)) {
+    ev.preventDefault();
+    const molId = detailMolId;
+    const slot = pasteSlot;
+    guard("#detail-error", async () => {
+      try {
+        await pasteFromServerClipboard(slot);
+      } catch (e) {
+        if (!file) throw e;
+        await uploadImageBlob(file, slot, molId);
+        await refreshMolecule(molId);
+      }
+    });
+    return;
+  }
   if (file) {
     ev.preventDefault();
     const molId = detailMolId;
@@ -3779,10 +3797,14 @@ $("#btn-theme").addEventListener("click", () => {
 // Folgt der Systemeinstellung, solange keine eigene Wahl getroffen wurde
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateThemeButton);
 
-// Versionsstempel der Weitergabe-Kopie anzeigen (im Entwicklungsordner leer)
+// Betriebssystem des Servers ("win32", "darwin", …) — steuert das Einfügen
+let serverPlatform = "";
+
+// Versionsstempel des Programms anzeigen (im Entwicklungsordner leer)
 async function showVersion() {
   try {
-    const { version } = await api("/version");
+    const { version, platform } = await api("/version");
+    serverPlatform = platform || "";
     if (version) {
       const el = $("#app-version");
       el.textContent = version;

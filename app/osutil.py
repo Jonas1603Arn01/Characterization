@@ -1,9 +1,9 @@
-"""Was zwischen Windows, macOS und Linux verschieden ist.
+"""Was zwischen Windows und macOS verschieden ist.
 
-Die App ist auf Windows zu Hause: Zwischenablage (clipboard_win) und
-ChemDraw-Fernsteuerung (chemdraw_render) gibt es nur dort. Auf macOS und
-Linux werden diese Module gar nicht erst importiert — die Aufrufer prüfen
-IS_WIN und melden stattdessen, dass die Funktion Windows braucht.
+Zwischenablage: clipboard_win bzw. clipboard_mac (gleiche Lese-Funktionen).
+ChemDraw fernsteuern (chemdraw_render, COM) geht nur unter Windows — die
+Aufrufer prüfen IS_WIN und melden sonst, wie es von Hand geht. Andere
+Systeme (nur run.py zum Entwickeln) bekommen das, was der Browser kann.
 """
 import os
 import subprocess

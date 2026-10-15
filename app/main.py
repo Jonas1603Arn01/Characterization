@@ -1,3 +1,4 @@
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -148,10 +149,13 @@ async def undo_snapshot_middleware(request: Request, call_next):
 
 @app.get("/api/version")
 def get_version() -> dict:
+    # platform: die Oberfläche liest unter macOS die Zwischenablage zuerst
+    # über den Server (sonst ginge ChemDraws CDX beim Einfügen verloren)
     try:
-        return {"version": VERSION_FILE.read_text(encoding="utf-8").strip()}
+        version = VERSION_FILE.read_text(encoding="utf-8").strip()
     except OSError:
-        return {"version": ""}
+        version = ""
+    return {"version": version, "platform": sys.platform}
 
 
 app.include_router(router)

@@ -1,6 +1,6 @@
 # PyInstaller recipe for the packaged program — build with tools/build.py.
-# Windows/Linux: one folder with the executable (not one file: starts faster
-# and trips fewer virus scanners). macOS: Characterization.app.
+# Windows: one folder with the executable (not one file: starts faster and
+# trips fewer virus scanners). macOS: Characterization.app.
 import os
 import sys
 
@@ -10,10 +10,10 @@ datas = [("static", "static"), ("app/wordskel", "app/wordskel")]
 binaries = []
 hiddenimports = collect_submodules("uvicorn") + ["app.dialog_worker"]
 # pywebview picks its window backend at runtime; name it so it is bundled
-hiddenimports += {
-    "win32": ["webview.platforms.winforms", "webview.platforms.edgechromium"],
-    "darwin": ["webview.platforms.cocoa"],
-}.get(sys.platform, ["webview.platforms.qt", "qtpy"])
+if sys.platform == "darwin":
+    hiddenimports += ["webview.platforms.cocoa", "app.clipboard_mac"]
+else:
+    hiddenimports += ["webview.platforms.winforms", "webview.platforms.edgechromium"]
 
 # Version stamp written by the build script (shown in the header and title)
 if os.path.isfile("build/VERSION"):
