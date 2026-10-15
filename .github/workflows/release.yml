@@ -41,9 +41,9 @@ jobs:
       - name: Build
         run: python tools/build.py --version "${{ github.ref_name }}" ${{ matrix.test }}
 
-      - name: Clipboard and ChemDraw tests (macOS)
+      - name: Clipboard, ChemDraw and updater tests (macOS)
         if: runner.os == 'macOS'
-        run: .venv-build/bin/python -m pytest tests/test_clipboard_mac.py -v
+        run: .venv-build/bin/python -m pytest tests/test_clipboard_mac.py tests/test_updater.py -v
 
       - name: Smoke test (server)
         run: python tools/smoke_test.py

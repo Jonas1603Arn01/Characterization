@@ -231,6 +231,7 @@ def test_projektliste_prueft_bilder_gebuendelt(client, tmp_path, counted):
         mol = client.post("/api/molecules",
                           json={"project_id": projekt["id"], "name": f"M{i}"}).json()
         client.patch(f"/api/molecules/{mol['id']}", json={"image_path": str(bilder / name)})
+    relink.flush()  # Kennungen im Hintergrund nachgetragen — zählte sonst mit (wie link_paths)
     counted.clear()
 
     liste = client.get("/api/projects").json()

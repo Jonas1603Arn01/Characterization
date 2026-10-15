@@ -330,9 +330,11 @@ def _sh_script(pid: int, target: Path, new: Path, log: Path, args: list[str]) ->
     stage = new.parent.parent
     argv = " ".join(_sh_quote(a) for a in args)
     # Mit Argumenten (Tests: --server-only) direkt starten, damit sie und die
-    # Umgebung ankommen; sonst wie ein Doppelklick über "open"
-    start = (f'"$target/Contents/MacOS/Characterization" {argv} >/dev/null 2>&1 &'
-             if args else 'open "$target"')
+    # Umgebung ankommen; sonst wie ein Doppelklick über "open". Als Funktion,
+    # denn "… &; exit 1" wäre ein Syntaxfehler (und sh liest den ganzen
+    # if-Block vorab — das Skript bräche dann vor dem Austausch ab).
+    start_body = (f'"$target/Contents/MacOS/Characterization" {argv} >/dev/null 2>&1 &'
+                  if args else 'open "$target"')
     return f"""#!/bin/sh
 # Characterization update helper (written by app/updater.py)
 target={_sh_quote(target)}
@@ -341,16 +343,19 @@ old={_sh_quote(old)}
 stage={_sh_quote(stage)}
 log={_sh_quote(log)}
 say() {{ echo "$(date '+%Y-%m-%dT%H:%M:%S') $1" >> "$log"; }}
+start_app() {{
+    {start_body}
+}}
 say 'waiting for the app to quit'
 while kill -0 {pid} 2>/dev/null; do sleep 0.5; done
 rm -rf "$old"
 if ! mv "$target" "$old"; then
-    say 'could not move the old version - update skipped'; rm -rf "$stage"; {start}; exit 1
+    say 'could not move the old version - update skipped'; rm -rf "$stage"; start_app; exit 1
 fi
 if ! mv "$new" "$target"; then
-    say 'could not move the new version into place'; mv "$old" "$target"; rm -rf "$stage"; {start}; exit 1
+    say 'could not move the new version into place'; mv "$old" "$target"; rm -rf "$stage"; start_app; exit 1
 fi
 rm -rf "$old" "$stage"
 say 'updated'
-{start}
+start_app
 """

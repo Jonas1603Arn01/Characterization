@@ -3,6 +3,9 @@ nachgestellt. Den echten Ablauf (Download, Austausch, Neustart) prüft
 tools/update_test.py am gebauten Programm."""
 import hashlib
 import io
+import shutil
+import subprocess
+import sys
 import urllib.error
 import zipfile
 
@@ -139,3 +142,58 @@ def test_unpack_puts_new_version_next_to_old(tmp_path):
     assert (new / "Characterization.exe").read_bytes() == b"exe"
     assert (new / "_internal" / "VERSION").read_text() == "1.4.0\n"
     assert not (tmp_path / "evil.txt").exists()
+
+
+def dead_pid() -> int:
+    """PID eines schon beendeten Prozesses — die App ist „schon zu"."""
+    proc = subprocess.Popen([sys.executable, "-c", "pass"])
+    proc.wait()
+    return proc.pid
+
+
+def old_and_new(tmp_path, target_name, new_rel):
+    target = tmp_path / target_name
+    target.mkdir()
+    (target / "marker").write_text("old")
+    new = tmp_path / new_rel
+    new.mkdir(parents=True)
+    (new / "marker").write_text("new")
+    return target, new
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Shell-Skript (macOS)")
+@pytest.mark.parametrize("args", [[], ["--server-only"]])
+def test_mac_helper_swaps_the_app(tmp_path, args, monkeypatch):
+    target, new = old_and_new(tmp_path, "Characterization.app",
+                              ".Characterization-update/Characterization/Characterization.app")
+    log = tmp_path / "update.log"
+    script = tmp_path / "update.sh"
+    script.write_text(updater._sh_script(dead_pid(), target, new, log, args), encoding="utf-8")
+    assert subprocess.run(["sh", "-n", str(script)]).returncode == 0  # Syntax
+    # "open" würde eine echte App starten wollen — hier ein harmloser Ersatz
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    (fake_bin / "open").write_text("#!/bin/sh\nexit 0\n")
+    (fake_bin / "open").chmod(0o755)
+    monkeypatch.setenv("PATH", f"{fake_bin}:{__import__('os').environ['PATH']}")
+    subprocess.run(["sh", str(script)], check=True, timeout=60)
+    assert (target / "marker").read_text() == "new"
+    assert not (tmp_path / "Characterization.app.old").exists()
+    assert not (tmp_path / ".Characterization-update").exists()
+    assert "updated" in log.read_text()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="PowerShell-Skript (Windows)")
+def test_windows_helper_swaps_the_folder(tmp_path):
+    target, new = old_and_new(tmp_path, "Characterization", "Characterization.new")
+    log = tmp_path / "update.log"
+    script = tmp_path / "update.ps1"
+    script.write_text(updater._ps_script(dead_pid(), target, new, log, ["--server-only"]),
+                      encoding="utf-8-sig")
+    # Ohne Characterization.exe im Ordner scheitert nur der Neustart am Ende
+    subprocess.run(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+                    "-File", str(script)], timeout=120, capture_output=True)
+    assert (target / "marker").read_text() == "new"
+    assert not (tmp_path / "Characterization.old").exists()
+    assert not new.exists()
+    assert "updated" in log.read_text(encoding="utf-8")

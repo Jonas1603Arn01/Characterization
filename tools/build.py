@@ -109,7 +109,16 @@ def main() -> None:
         "-r", "requirements.txt", "-r", "requirements-build.txt", env=env)
 
     if args.test:
-        run(py, "-m", "pytest", "tests", "-q")
+        print("+ pytest tests", flush=True)
+        result = subprocess.run([str(py), "-m", "pytest", "tests", "-q", "-rf"], cwd=ROOT,
+                                capture_output=True, text=True, encoding="utf-8", errors="replace")
+        print(result.stdout + result.stderr, flush=True)
+        if result.returncode:
+            if os.environ.get("GITHUB_ACTIONS"):  # publicly readable, see tools/ci_report.py
+                tail = (result.stdout + result.stderr)[-8000:]
+                tail = tail.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+                print(f"::error title=Unit tests failed::{tail}", flush=True)
+            sys.exit("Tests failed - no build")
 
     (ROOT / "build").mkdir(exist_ok=True)
     (ROOT / "build" / "VERSION").write_text(version + "\n", encoding="utf-8")
