@@ -1,0 +1,4 @@
+# Only for the packaged program (desktop.py -> Characterization.exe);
+# start.bat / run.py need just requirements.txt.
+pywebview==5.4
+pyinstaller==6.11.1

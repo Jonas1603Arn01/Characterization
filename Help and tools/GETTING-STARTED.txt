@@ -1,0 +1,73 @@
+CHARACTERIZATION - QUICK START GUIDE
+====================================
+
+Local app for organizing characterization data
+(projects -> molecules -> analytics). All data stays on this PC.
+
+
+FIRST-TIME SETUP (once)
+-----------------------
+1. Copy the app folder (the one containing start.bat) to a
+   permanent location (e.g. Documents).
+   Important: if you received it as a ZIP, extract it first -
+   do not start the app from inside the ZIP.
+2. If not already installed: install Python 3.12
+   (https://www.python.org/downloads/)
+   During setup, make sure to tick "Add python.exe to PATH".
+3. Double-click "start.bat" in the app folder. On first launch
+   the app sets itself up (takes a few minutes), then your
+   browser opens.
+4. Recommended: double-click "Create desktop shortcut.bat" in the
+   "Help and tools" folder - this puts a "Characterization" icon
+   on your desktop.
+
+
+DAILY USE
+---------
+- Start via the desktop icon (or start.bat).
+- The black window is the server: keep it open while you use
+  the app. To close the app, click "Quit" (top right): it takes
+  a backup and releases the data folder, then the black window
+  closes by itself. Closing the black window directly also ends
+  the app, but without the exit backup.
+- All data lives in the app folder (data\ and backups\) -
+  nothing is sent to the internet.
+
+
+USING THE SAME DATA ON SEVERAL PCs
+----------------------------------
+1. On the PC with your data: open "Backups" in the app, then
+   "Change data folder..." at the bottom, and pick an empty folder
+   on a network drive (e.g. H:\...\Characterization-Data). Your
+   data is copied there and the app switches to it.
+2. On each other PC: install the app as usual, then pick the SAME
+   folder in the same dialog. It is opened directly.
+Only one PC can edit at a time - the other one shows a yellow
+"read-only" banner until the app is closed on the first PC.
+Linked files on network drives work on every PC; files on a local
+drive (C:\...) are marked with a small PC symbol because other PCs
+cannot reach them.
+
+
+INSTALLING A NEW VERSION (without losing data)
+----------------------------------------------
+1. Put the new ZIP (Characterization-App_YYYY-MM-DD.zip) in your
+   Downloads or Desktop folder.
+2. Close the app ("Quit" button, top right).
+3. Double-click "Install update.bat" in the "Help and tools"
+   folder. The script finds the newest ZIP automatically, replaces
+   only the program files and leaves all your own data
+   (data\, backups\) untouched.
+   Before updating, an extra safety copy of the database is
+   placed in backups\.
+
+The installed version is shown at the top of the app next to the
+title (and in the VERSION file in the app folder).
+
+
+PROBLEMS?
+---------
+- "No Python found": install Python 3.12 (see above).
+- App does not start after moving to another PC: just run
+  start.bat - the environment is rebuilt automatically.
+- Browser shows nothing: open http://127.0.0.1:8710 manually.

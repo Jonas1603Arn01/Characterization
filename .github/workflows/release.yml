@@ -1,0 +1,40 @@
+# Builds Characterization.exe on GitHub's own Windows machine and attaches
+# it to a release. Triggered by pushing a version tag:
+#
+#   git tag v1.0.0
+#   git push origin v1.0.0
+#
+# The build only ever sees the repository contents — no dataset, config.json
+# or anything else from a developer PC can end up in the download.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test and build
+        shell: pwsh
+        run: tools\build_exe.ps1 -Version "${{ github.ref_name }}" -Test
+
+      - name: Publish release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "${{ github.ref_name }}"
+          (Get-ChildItem dist\*.zip).FullName
+          --title "Characterization ${{ github.ref_name }}"
+          --generate-notes

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- App-Icon: Sechseck (Logo der App) auf Indigo-Verlauf,
+       gruener Haken = "Charakterisierung vollstaendig" -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/>
+      <stop offset="1" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="0" y="0" width="256" height="256" rx="56" fill="url(#bg)"/>
+
+  <!-- Sechseck-Umriss (wie das ⬡ im App-Kopf) -->
+  <path d="M128 58 L188.6 93 L188.6 163 L128 198 L67.4 163 L67.4 93 Z"
+        fill="none" stroke="#ffffff" stroke-width="17" stroke-linejoin="round"/>
+
+  <!-- Haken-Plakette in der Mitte -->
+  <circle cx="128" cy="128" r="27" fill="#22c55e"/>
+  <path d="M115 128 l9 10 l19 -21" fill="none" stroke="#ffffff"
+        stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
